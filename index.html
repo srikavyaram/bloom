@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bloom · Daily Planner</title>
+  <meta name="description" content="A cheerful daily planner that remembers your routine and nudges you to plan tomorrow.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#FFE0B8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#3A1D2A" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Bloom">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Classic scripts (not modules) so Bloom also works when this file is opened directly. Order matters. -->
+  <script defer src="js/schedule.js"></script>
+  <script defer src="js/store.js"></script>
+  <script defer src="js/ics.js"></script>
+  <script defer src="js/notify.js"></script>
+  <script defer src="js/app.js"></script>
+</head>
+<body data-view="today">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="app">
+    <!-- Warm sunrise header: greeting, affirmation, today's progress and streak -->
+    <header class="hero" id="hero">
+      <div class="hero-sun" aria-hidden="true"></div>
+      <div class="hero-top">
+        <p class="hero-date" id="today-date"></p>
+        <h1 class="hero-greeting"><span id="greeting">Hello</span> <span id="greeting-emoji" aria-hidden="true"></span></h1>
+        <p class="hero-affirmation" id="affirmation"></p>
+      </div>
+      <div class="hero-stats">
+        <div class="ring" id="ring" role="img" aria-label="">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <circle class="ring-track" cx="32" cy="32" r="26"></circle>
+            <circle class="ring-fill" id="ring-fill" cx="32" cy="32" r="26"></circle>
+          </svg>
+          <span class="ring-text" id="ring-text" aria-hidden="true">0/0</span>
+        </div>
+        <div class="hero-progress">
+          <p class="hero-progress-main" id="progress-main"></p>
+          <p class="hero-progress-sub" id="progress-sub"></p>
+        </div>
+        <p class="streak-chip" id="streak-chip"></p>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <!-- TODAY -->
+      <section class="view" id="view-today" role="tabpanel" aria-labelledby="tab-today">
+        <div class="plan-banner" id="plan-banner" hidden>
+          <span class="plan-banner-emoji" aria-hidden="true">🌙</span>
+          <p class="plan-banner-text" id="plan-banner-text"></p>
+          <div class="plan-banner-actions">
+            <button type="button" class="btn btn-primary btn-small" data-action="go-tomorrow">Plan tomorrow</button>
+            <button type="button" class="btn btn-ghost btn-small" data-action="dismiss-plan">Later</button>
+          </div>
+        </div>
+
+        <div id="next-card"></div>
+
+        <h2 class="section-title">Today’s plan</h2>
+        <ol class="timeline" id="today-list"></ol>
+        <div id="today-empty"></div>
+
+        <div id="anytime-wrap" hidden>
+          <h2 class="section-title">Anytime today</h2>
+          <ul class="timeline timeline-anytime" id="anytime-list"></ul>
+        </div>
+      </section>
+
+      <!-- TOMORROW -->
+      <section class="view" id="view-tomorrow" role="tabpanel" aria-labelledby="tab-tomorrow" hidden>
+        <div class="view-head">
+          <h2 class="view-title">Tomorrow</h2>
+          <p class="view-sub" id="tomorrow-date"></p>
+        </div>
+
+        <form class="card quick-add" id="quick-add" novalidate>
+          <h3 class="quick-add-title"><span aria-hidden="true">🌱</span> Add something for tomorrow</h3>
+          <div class="quick-add-row">
+            <label class="field quick-add-name">
+              <span class="field-label">What is it?</span>
+              <input type="text" name="title" maxlength="80" autocomplete="off" enterkeyhint="done"
+                     placeholder="e.g. Call the bank" aria-describedby="qa-error">
+            </label>
+            <label class="field quick-add-time">
+              <span class="field-label">Time <span class="field-hint">(optional)</span></span>
+              <input type="time" name="time">
+            </label>
+          </div>
+          <p class="field-error" id="qa-error" aria-live="polite"></p>
+          <button type="submit" class="btn btn-primary btn-block">Add to tomorrow</button>
+        </form>
+
+        <p class="summary-line" id="tomorrow-summary"></p>
+        <ol class="timeline" id="tomorrow-list"></ol>
+        <div id="tomorrow-empty"></div>
+      </section>
+
+      <!-- ROUTINE + SETTINGS -->
+      <section class="view" id="view-routine" role="tabpanel" aria-labelledby="tab-routine" hidden>
+        <div class="view-head">
+          <h2 class="view-title">Your routine</h2>
+          <p class="view-sub">These repeat on their own, so you never have to add them again.</p>
+        </div>
+        <ul class="routine-list" id="routine-list"></ul>
+
+        <div id="oneoff-wrap" hidden>
+          <h2 class="section-title">Coming up · one-time</h2>
+          <ul class="routine-list" id="oneoff-list"></ul>
+        </div>
+
+        <h2 class="section-title section-title-settings">Settings</h2>
+
+        <div class="card settings-card">
+          <label class="field">
+            <span class="field-label">Your name <span class="field-hint">(for the greeting)</span></span>
+            <input type="text" id="set-name" maxlength="40" autocomplete="given-name" placeholder="e.g. Kavya">
+          </label>
+          <label class="field">
+            <span class="field-label">Nightly “plan tomorrow” reminder</span>
+            <input type="time" id="set-plantime" required>
+          </label>
+        </div>
+
+        <div class="card settings-card">
+          <h3 class="card-title"><span aria-hidden="true">🔔</span> Reminders</h3>
+          <p class="card-text" id="notif-status"></p>
+          <button type="button" class="btn btn-primary" id="notif-btn">Turn on reminders</button>
+        </div>
+
+        <div class="card settings-card">
+          <h3 class="card-title"><span aria-hidden="true">📅</span> Add to phone calendar</h3>
+          <p class="card-text">Your phone’s calendar will remind you even when Bloom is closed.</p>
+          <button type="button" class="btn btn-secondary" id="ics-btn">Download calendar file (.ics)</button>
+        </div>
+
+        <div class="card settings-card">
+          <h3 class="card-title"><span aria-hidden="true">💾</span> Backup</h3>
+          <p class="card-text">Everything stays on this device. Save a copy, or move to a new phone.</p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" id="export-btn">Save backup</button>
+            <label class="btn btn-secondary" for="import-file">Restore backup</label>
+            <input type="file" id="import-file" accept="application/json,.json" class="visually-hidden">
+          </div>
+        </div>
+
+        <div class="card settings-card" id="install-card" hidden>
+          <h3 class="card-title"><span aria-hidden="true">📲</span> Install Bloom</h3>
+          <p class="card-text" id="install-text">Add Bloom to your home screen. It opens instantly and works offline.</p>
+          <button type="button" class="btn btn-primary" id="install-btn" hidden>Install app</button>
+        </div>
+
+        <p class="footer-note">Made with care · works offline <span aria-hidden="true">🌸</span></p>
+      </section>
+    </main>
+
+    <button type="button" class="fab" id="fab" aria-label="Add activity">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+
+    <nav class="tabbar" aria-label="Views">
+      <div class="tabbar-inner" role="tablist">
+        <button type="button" role="tab" class="tab" id="tab-today" aria-controls="view-today" aria-selected="true" data-view="today">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+          <span>Today</span>
+        </button>
+        <button type="button" role="tab" class="tab" id="tab-tomorrow" aria-controls="view-tomorrow" aria-selected="false" tabindex="-1" data-view="tomorrow">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M6.5 18a5.5 5.5 0 0 1 11 0M12 6v3M5.2 10.2l1.7 1.4M18.8 10.2l-1.7 1.4"/></svg>
+          <span>Tomorrow</span>
+          <span class="tab-dot" id="tomorrow-dot" hidden></span>
+        </button>
+        <button type="button" role="tab" class="tab" id="tab-routine" aria-controls="view-routine" aria-selected="false" tabindex="-1" data-view="routine">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3l3 3-3 3"/><path d="M4 11V9a3 3 0 0 1 3-3h13"/><path d="M7 21l-3-3 3-3"/><path d="M20 13v2a3 3 0 0 1-3 3H4"/></svg>
+          <span>Routine</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Add / edit bottom sheet -->
+  <dialog class="sheet" id="sheet" aria-labelledby="sheet-title">
+    <form class="sheet-form" id="sheet-form" novalidate>
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 class="sheet-title" id="sheet-title">New activity</h2>
+        <button type="button" class="icon-btn" data-action="close-sheet" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <label class="field">
+        <span class="field-label">What’s the plan?</span>
+        <input type="text" name="title" id="f-title" maxlength="80" autocomplete="off" enterkeyhint="done"
+               placeholder="e.g. Evening walk" aria-describedby="err-title">
+      </label>
+      <p class="field-error" id="err-title"></p>
+
+      <fieldset class="field">
+        <legend class="field-label">Emoji</legend>
+        <div class="emoji-row" id="emoji-row"></div>
+      </fieldset>
+
+      <div class="field">
+        <div class="time-row">
+          <label class="time-label">
+            <span class="field-label">Time</span>
+            <input type="time" name="time" id="f-time" aria-describedby="err-time">
+          </label>
+          <label class="toggle">
+            <input type="checkbox" name="anytime" id="f-anytime">
+            <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+            <span>Anytime</span>
+          </label>
+        </div>
+        <p class="field-error" id="err-time"></p>
+      </div>
+
+      <fieldset class="field">
+        <legend class="field-label">Repeat</legend>
+        <div class="segmented" id="repeat-seg">
+          <label><input type="radio" name="repeat" value="once"><span>Once</span></label>
+          <label><input type="radio" name="repeat" value="daily"><span>Every day</span></label>
+          <label><input type="radio" name="repeat" value="weekdays"><span>Weekdays</span></label>
+          <label><input type="radio" name="repeat" value="weekly"><span>Pick days</span></label>
+        </div>
+        <div class="day-chips" id="day-chips" hidden></div>
+        <label class="date-label" id="date-wrap" hidden>
+          <span class="field-label">Date</span>
+          <input type="date" name="date" id="f-date">
+        </label>
+        <p class="field-error" id="err-repeat"></p>
+      </fieldset>
+
+      <label class="field">
+        <span class="field-label">Remind me</span>
+        <select name="remindBefore" id="f-remind" aria-describedby="err-remindBefore"></select>
+      </label>
+      <p class="field-error" id="err-remindBefore"></p>
+
+      <fieldset class="field">
+        <legend class="field-label">Colour</legend>
+        <div class="color-row" id="color-row"></div>
+      </fieldset>
+
+      <details class="more" id="more">
+        <summary>More options</summary>
+        <label class="field">
+          <span class="field-label">How long?</span>
+          <select name="durationMin" id="f-duration" aria-describedby="err-durationMin"></select>
+        </label>
+        <p class="field-error" id="err-durationMin"></p>
+        <label class="field">
+          <span class="field-label">Notes</span>
+          <textarea name="notes" id="f-notes" rows="2" maxlength="1000" aria-describedby="err-notes"></textarea>
+        </label>
+        <p class="field-error" id="err-notes"></p>
+      </details>
+
+      <div class="sheet-actions">
+        <button type="submit" class="btn btn-primary btn-block" id="save-btn">Save</button>
+        <div class="sheet-secondary" id="sheet-secondary" hidden>
+          <button type="button" class="btn btn-secondary" id="skip-btn" data-action="skip">Skip today only</button>
+          <button type="button" class="btn btn-danger" id="delete-btn" data-action="delete">Delete</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+  <div class="fx-layer" id="fx" aria-hidden="true"></div>
+
+  <noscript>
+    <div class="noscript">Bloom needs JavaScript to plan your day. Please enable it and reload. 🌸</div>
+  </noscript>
+</body>
+</html>

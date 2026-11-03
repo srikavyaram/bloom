@@ -1,0 +1,37 @@
+{
+  "id": "./",
+  "name": "Bloom · Daily Planner",
+  "short_name": "Bloom",
+  "description": "A cheerful daily planner that remembers your routine — scrum, classes, sessions — and nudges you to plan tomorrow.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#FF8A65",
+  "background_color": "#FFF7F0",
+  "categories": ["productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add task",
+      "short_name": "Add",
+      "description": "Add a new activity",
+      "url": "./?action=add",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Tomorrow",
+      "short_name": "Tomorrow",
+      "description": "Plan tomorrow's schedule",
+      "url": "./?view=tomorrow",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
